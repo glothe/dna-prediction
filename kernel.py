@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 
 def memoize_id(func):
+    """If already computed, does not recompute the kernel result"""
     # memoize by object id
     func.cache = {}
 

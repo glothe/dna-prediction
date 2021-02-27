@@ -39,7 +39,7 @@ if __name__ == "__main__":
     x = np.linspace(-1, 11).reshape(-1, 1)
 
     # Linear kernel
-    svm = StateVectorMachine(gaussian_kernel(.5), regularization=2)
+    svm = SupportVectorMachine(gaussian_kernel(.5), regularization=2)
     svm.fit(X, y)
     plt.plot(x, svm.predict(x))
 

@@ -8,14 +8,8 @@ MODE_IDENTIFIER = {
     "test": "te"
 }
 
-CHARSET = {
-    "A": 0,
-    "T": 1,
-    "C": 2,
-    "G": 3
-}
-
-def load_X(index=0, mode="train", folder="../data", remap: bool = False):
+def load_X(index=0, mode="train", folder="../data"):
+    """Loads the sequence files"""
     mode_identifier = MODE_IDENTIFIER[mode]
     fn = os.path.join(folder, f"X{mode_identifier}{index}.csv")
     print(f"Loading {fn}.")
@@ -30,12 +24,14 @@ def load_X(index=0, mode="train", folder="../data", remap: bool = False):
     return np.array(sequences, dtype="str")
 
 def load_Xmat(index=0, mode="train", folder="../data"):
+    """Loads the simplified sequence files"""
     mode_identifier = MODE_IDENTIFIER[mode]
     fn = os.path.join(folder, f"X{mode_identifier}{index}_mat100.csv")
     print(f"Loading {fn}.")
     return np.genfromtxt(fn, dtype=float)
 
 def load_y(index=0, folder="../data"):
+    """Loads the label files"""
     fn = os.path.join(folder, f"Ytr{index}.csv")
     print(f"Loading {fn}.")
     return np.genfromtxt(fn, skip_header=1, usecols=[1], delimiter=",", dtype=float) * 2 - 1

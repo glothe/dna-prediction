@@ -38,10 +38,11 @@ class KernelRegression():
         error = y - y_pred
         return np.mean(error * error)
 
-    def accuracy(self, X: np.ndarray, y: np.ndarray = None):
+    def accuracy(self, X: np.ndarray, y: np.ndarray):
         return np.mean((y == np.sign(self.predict(X))))
 
 class KernelRidgeRegression(KernelRegression):
+    ## See slide 94
     def fit(self, X: np.ndarray = None, y: np.ndarray = None, weights: np.ndarray = None):
         if self.K is None:
             assert X is not None
@@ -58,6 +59,7 @@ class KernelRidgeRegression(KernelRegression):
             self.alpha = np.linalg.solve(A, y)
 
         else:
+            # See slide 103 for WKRR
             w12 = np.sqrt(weights)
             A = w12[:, None] * self.K * w12[None, :]
             A.flat[::n+1] += self.regularization * n
@@ -78,15 +80,17 @@ class KernelLogisticRegression(KernelRegression):
         alpha = np.ones(shape=n) / np.sqrt(n)
 
         for i in range(max_iter):
+
+            ## See slide 114
             m = np.dot(self.K, alpha)
             s = sigmoid(m)
             weights = s * (1 - s)
-            z = m - y / sigmoid(-y * m)
+            z = m + y / sigmoid(y * m)
 
             w12 = np.sqrt(weights)
             A = w12[:, None] * self.K * w12[None, :]
             A.flat[::n+1] += self.regularization * n
-            alpha = w12 * np.linalg.solve(A, w12*y)
+            alpha = w12 * np.linalg.solve(A, w12*z)
 
         self.alpha = alpha
 
@@ -104,18 +108,18 @@ if __name__ == "__main__":
     # Linear kernel
     krr = KernelRidgeRegression(linear_kernel)
     krr.fit(X, y)
-    plt.plot(x, krr.predict(x))
+    plt.plot(x, krr.predict(x), label="KRR with Linear kernel")
 
     # Gaussian kernel
     krr = KernelRidgeRegression(gaussian_kernel(.5))
     krr.fit(X, y, weights=X.ravel())
-    plt.plot(x, krr.predict(x))
+    plt.plot(x, krr.predict(x), label="KRR with Gaussian kernel")
 
     # Logistic regression
     klr = KernelLogisticRegression(gaussian_kernel(.5))
     klr.fit(X, y)
-    plt.plot(x, klr.predict(x))
+    plt.plot(x, klr.predict(x), label="KLR with Gaussian kernel")
 
-
+    plt.legend()
     plt.show()
     
