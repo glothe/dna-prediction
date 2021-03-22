@@ -6,15 +6,21 @@ from kernel import linear_kernel
 
 class SupportVectorMachine(KernelRegression):
     def fit(self, X: np.ndarray, y: np.ndarray):
+        self.y = y
+        n = len(X)
+
         if self.K is None:
             assert X is not None
-
             self.K = self.kernel(X, X)
             self.X = X
 
-        self.y = y
+            try:
+                assert np.all(np.linalg.eigvals(self.K) >= 0)
+            except AssertionError:
+                print("Kernel is not positive in SupportVectorMachine function")
+                self.alpha = np.zeros(n)
+                return 
 
-        n = len(self.X)
         alpha = cp.Variable(n)
 
         objective = cp.Minimize(.5 * cp.quad_form(alpha, self.K) - alpha.T @ y)
