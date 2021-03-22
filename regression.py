@@ -40,6 +40,9 @@ class KernelRegression():
 
     def accuracy(self, X: np.ndarray, y: np.ndarray):
         return np.mean((y == np.sign(self.predict(X))))
+    
+    def score(self, X: np.ndarray, y: np.ndarray):
+        return self.accuracy(X,y)
 
 class KernelRidgeRegression(KernelRegression):
     ## See slide 94

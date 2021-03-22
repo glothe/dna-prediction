@@ -115,6 +115,10 @@ We implemented the following kernels:
 \end_layout
 
 \begin_layout Itemize
+linear kernel
+\end_layout
+
+\begin_layout Itemize
 gaussian kernel
 \end_layout
 

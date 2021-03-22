@@ -21,7 +21,10 @@ def load_X(index=0, mode="train", folder="../data"):
             seq = row["seq"]
             sequences.append(seq)
 
-    return tuple(sequences)
+    return np.array(sequences, dtype="str")
+    #np.array(sequences, dtype="str")
+    #tuple(sequences)
+    #sequences
 
 def load_Xmat(index=0, mode="train", folder="../data"):
     """Loads the simplified sequence files"""
