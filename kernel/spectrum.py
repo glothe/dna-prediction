@@ -46,6 +46,8 @@ def spectrum_kernel(k: int = 4):
 
         if symmetric:
             K = np.zeros(shape=(n0, n0))
+
+            # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
                 X0i = X0_dict[i]
                 for j in range(i, n0):
@@ -58,6 +60,8 @@ def spectrum_kernel(k: int = 4):
             X1_dict = feature_vector(X1, k)
 
             K = np.zeros(shape=(n0, n1))
+
+            # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
                 X0i = X0_dict[i]
                 for j in range(n1):

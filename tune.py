@@ -154,33 +154,27 @@ def svm_spectrum(trial):
     svm.fit(Xtr, ytr)
     return svm.accuracy(Xva, yva)
 
-## Mismatch
+# Mismatch
 def klr_mismatch(trial): #Does not work
-    # Best  0.X (index=0)      {'C': 0.2681280835940456, 'm': 4}
-    #       0.X (index=1)    {'C': 56.883446994457, 'm': 4} #with value: 0.615 and parameters: {'C': 16.685807660880197, 'm': 4}
-    #       0.X (index=2)    {'C': 0.24075076252842445, 'm': 4}
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
-    m = trial.suggest_int("m", 1, 2)
+    m = trial.suggest_int("m", 1, 1)
 
-    klr = KernelLogisticRegression(kernel=mismatch_kernel(m, k), regularization=C)
-    klr.fit(Xtr[:500], ytr[:500])
-    return klr.accuracy(Xva[:100], yva[:100])
+    klr = KernelLogisticRegression(kernel=mismatch_kernel(k, m), regularization=C)
+    klr.fit(Xtr, ytr)
+    return klr.accuracy(Xva, yva)
 
 def svm_mismatch(trial):
-    # Best  0.X (index=0)      {'C': 0.2681280835940456, 'm': 4}
-    #       0.X (index=1)    {'C': 56.883446994457, 'm': 4} #with value: 0.615 and parameters: {'C': 16.685807660880197, 'm': 4}
-    #       0.X (index=2)    {'C': 0.24075076252842445, 'm': 4}
-    C = trial.suggest_float("C", 1e-2, 1e4, log=True)
+    C = trial.suggest_float("C", 1e-2, 1e3, log=True)
     k = trial.suggest_int("k", 3, 8)
-    m = trial.suggest_int("m", 1, 2)
+    m = trial.suggest_int("m", 1, 1)
 
-    svm = SupportVectorMachine(kernel=mismatch_kernel(m, k), regularization=C)
-    svm.fit(Xtr[:500], ytr[:500])
-    return svm.accuracy(Xva[:100], yva[:100])
+    svm = SupportVectorMachine(kernel=mismatch_kernel(k, m), regularization=C)
+    svm.fit(Xtr, ytr)
+    return svm.accuracy(Xva, yva)
 
 
-## Substring
+# Substring
 def svm_substring(trial):
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     p = 5 #trial.suggest_int("p", 2, 2)
@@ -190,6 +184,8 @@ def svm_substring(trial):
     svm.fit(Xtr[:200], ytr[:200])
     return svm.accuracy(Xva[:50], yva[:50])
 
+
+## Sanity check
 def random():
     n = len(yva)
     y_pred = np.sign(np.random.randn(n))
@@ -202,7 +198,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_mismatch, n_trials=100, n_jobs=-1)
+        study.optimize(svm_spectrum, n_trials=100)
 
     except KeyboardInterrupt:
         pass
