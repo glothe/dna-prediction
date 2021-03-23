@@ -8,7 +8,7 @@ from kernel.classic import linear_kernel
 class SupportVectorMachine(KernelRegression):
     def fit(self, X: np.ndarray, y: np.ndarray):
         self.y = y
-        n = len(X)
+        n = len(y)
 
         if self.K is None:
             assert X is not None

@@ -9,7 +9,9 @@ MODE_IDENTIFIER = {
 }
 
 def load_X(index=0, mode="train", folder="../data"):
-    """Loads the sequence files"""
+    """
+    Loads the sequence files
+    """
     mode_identifier = MODE_IDENTIFIER[mode]
     fn = os.path.join(folder, f"X{mode_identifier}{index}.csv")
     print(f"Loading {fn}.")
@@ -22,24 +24,28 @@ def load_X(index=0, mode="train", folder="../data"):
             sequences.append(seq)
 
     return np.array(sequences, dtype="str")
-    #np.array(sequences, dtype="str")
-    # return tuple(sequences)
-    #sequences
 
 def load_Xmat(index=0, mode="train", folder="../data"):
-    """Loads the simplified sequence files"""
+    """
+    Loads the simplified sequence files
+    """
     mode_identifier = MODE_IDENTIFIER[mode]
     fn = os.path.join(folder, f"X{mode_identifier}{index}_mat100.csv")
     print(f"Loading {fn}.")
     return np.genfromtxt(fn, dtype=float)
 
 def load_y(index=0, folder="../data"):
-    """Loads the label files"""
+    """
+    Loads the label files
+    """
     fn = os.path.join(folder, f"Ytr{index}.csv")
     print(f"Loading {fn}.")
     return np.genfromtxt(fn, skip_header=1, usecols=[1], delimiter=",", dtype=float) * 2 - 1
 
 def split(data, frac=.8):
+    """
+    Deterministic split
+    """
     n = int(len(data) * frac)
     return data[:n], data[n:]
 

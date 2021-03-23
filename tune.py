@@ -1,27 +1,34 @@
 
 
-import optuna
+from functools import partial
 
-from load import *
-from regression import *
-from svm import *
-
-from kernel.spectrum import spectrum_kernel
-from kernel.mismatch import mismatch_kernel
-
+# Debugging
 import sklearn.kernel_ridge
 import sklearn.linear_model 
 import sklearn.svm
 
+# Tuning
+import optuna
+
+# Custom
+from load import *
+from regression import *
+from svm import *
+
+from kernel.classic import linear_kernel, gaussian_kernel
+from kernel.spectrum import spectrum_kernel
+from kernel.mismatch import mismatch_kernel
+from kernel.mkl import weighted_sum_kernel
+
 from sklearn.model_selection import KFold
 
 ## ______ Parameters ______
-index = 2
+index = 1
 split_param = .8
 
-X, y = load_X(index), load_y(index)
-# X, y = load_Xmat(index), load_y(index)
+Xmat, X, y = load_Xmat(index), load_X(index), load_y(index)
 
+Xmattr, Xmatva = split(Xmat, split_param)
 Xtr, Xva = split(X, split_param)
 ytr, yva = split(y, split_param)
 
@@ -58,6 +65,13 @@ def sklearn_svm(trial):
     y_pred = np.sign(svm.predict(Xva))
     return np.mean(yva == y_pred)
 
+## Sanity check
+def random():
+    n = len(yva)
+    y_pred = np.sign(np.random.randn(n))
+    err = y_pred - yva
+    return np.mean(err * err)
+
 ## Linear kernel
 def krr_linear(trial):
     lambda_ = trial.suggest_float("lambda_", 1e-3, 1e4, log=True)
@@ -93,9 +107,9 @@ def krr_gaussian(trial):
     lambda_ = trial.suggest_float("lambda_", 1e-2, 1e2, log=True)
 
     krr = KernelRidgeRegression(kernel=gaussian_kernel(sig2), regularization=lambda_)
-    krr.fit(Xtr, ytr)
+    krr.fit(Xmattr, ytr)
 
-    return krr.accuracy(Xva, yva)
+    return krr.accuracy(Xmatva, yva)
 
 def klr_gaussian(trial):
     # Best  0.62 (index=0)      {'sig2': 0.0006435829108282353, 'lambda_': 14.427768167767454}
@@ -106,9 +120,9 @@ def klr_gaussian(trial):
     lambda_ = trial.suggest_float("lambda_", 1, 1e2, log=True)
 
     klr = KernelLogisticRegression(kernel=gaussian_kernel(sig2), regularization=lambda_)
-    klr.fit(Xtr, ytr)
+    klr.fit(Xmattr, ytr)
 
-    return klr.accuracy(Xva, yva)
+    return klr.accuracy(Xmatva, yva)
 
 def svm_gaussian(trial):
     # Best  0.62 (index=0)     {'sig2': 0.0004475252677121083, 'C': 3.7371130579973366} #same   with {'sig2': 0.0005929692706695875, 'C': 2.2862830866907577}
@@ -120,8 +134,8 @@ def svm_gaussian(trial):
     C = trial.suggest_float("C", 1e-2, 10, log=True)
 
     svm = SupportVectorMachine(kernel=gaussian_kernel(sig2), regularization=C)
-    svm.fit(Xtr, ytr)
-    return svm.accuracy(Xva, yva)
+    svm.fit(Xmattr, ytr)
+    return svm.accuracy(Xmatva, yva)
 
 def svm_gaussian_cv(trial):
     # Best  0.6255 (index=0)   {'sig2': 0.0018549184100468577, 'C': 0.6794728013566558}
@@ -135,16 +149,16 @@ def svm_gaussian_cv(trial):
     kf5 = KFold(n_splits=5, shuffle=False)
     for train_index, test_index in kf5.split(range(len(X))):
         svm = SupportVectorMachine(kernel=gaussian_kernel(sig2), regularization=C)
-        svm.fit(X[train_index], y[train_index])
-        score = svm.accuracy(X[test_index], y[test_index])
+        svm.fit(Xmat[train_index], y[train_index])
+        score = svm.accuracy(Xmat[test_index], y[test_index])
         print(score)
         total_score += score
     
     return total_score / 5
 
-## Spectrum
+# Spectrum
 def svm_spectrum(trial):
-    # Best  0.6300 (index=0)      {'C': 0.2681280835940456, 'm': 4}
+    # Best  0.6300 (index=0)    {'C': 0.2681280835940456, 'm': 4}
     #       0.6175 (index=1)    {'C': 56.883446994457, 'm': 4} 
     #       0.6975 (index=2)    {'C': 0.24075076252842445, 'm': 4}
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
@@ -154,7 +168,7 @@ def svm_spectrum(trial):
     svm.fit(Xtr, ytr)
     return svm.accuracy(Xva, yva)
 
-# Mismatch
+# Mismatch - not pd yet
 def klr_mismatch(trial): #Does not work
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
@@ -173,8 +187,25 @@ def svm_mismatch(trial):
     svm.fit(Xtr, ytr)
     return svm.accuracy(Xva, yva)
 
+# MKL
+def svm_spectrum_gaussian(trial):
+    # Best  0
+    #       0.6325 (index=1)    {'sig2': 0.005477685497805747, 'alpha': 0.06894000436436931, 'C': 8.655524486367424}
+    #       0
+    sig2 = trial.suggest_float("sig2", 1e-5, 1e-1, log=True)
+    alpha = trial.suggest_float("alpha", 0, 1)
+    C = trial.suggest_float("C", 1e-2, 1e2, log=True)
 
-# Substring
+    k1 = spectrum_kernel(4)
+    k2 = gaussian_kernel(sig2)
+    kernel = weighted_sum_kernel(k1, k2, alpha)
+
+    svm = SupportVectorMachine(kernel=kernel, regularization=C)
+    svm.fit((Xtr, Xmattr), ytr)
+    return svm.accuracy((Xva, Xmatva), yva)
+
+
+# Substring - too slow
 def svm_substring(trial):
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     p = 5 #trial.suggest_int("p", 2, 2)
@@ -185,20 +216,13 @@ def svm_substring(trial):
     return svm.accuracy(Xva[:50], yva[:50])
 
 
-## Sanity check
-def random():
-    n = len(yva)
-    y_pred = np.sign(np.random.randn(n))
-    err = y_pred - yva
-    return np.mean(err * err)
-
 
 if __name__ == "__main__":
     print("_______ Dataset index=", index)
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_spectrum, n_trials=100)
+        study.optimize(svm_spectrum_gaussian, n_trials=100)
 
     except KeyboardInterrupt:
         pass
