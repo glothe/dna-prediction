@@ -2,7 +2,8 @@ import numpy as np
 import cvxpy as cp
 
 from regression import KernelRegression
-from kernel import linear_kernel
+from kernel.classic import linear_kernel
+
 
 class SupportVectorMachine(KernelRegression):
     def fit(self, X: np.ndarray, y: np.ndarray):
@@ -13,13 +14,6 @@ class SupportVectorMachine(KernelRegression):
             assert X is not None
             self.K = self.kernel(X, X)
             self.X = X
-
-            try:
-                assert np.all(np.linalg.eigvals(self.K) >= 0)
-            except AssertionError:
-                print("Kernel is not positive in SupportVectorMachine function")
-                self.alpha = np.zeros(n)
-                return 
 
         alpha = cp.Variable(n)
 

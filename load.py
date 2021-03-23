@@ -23,7 +23,7 @@ def load_X(index=0, mode="train", folder="../data"):
 
     return np.array(sequences, dtype="str")
     #np.array(sequences, dtype="str")
-    #tuple(sequences)
+    # return tuple(sequences)
     #sequences
 
 def load_Xmat(index=0, mode="train", folder="../data"):

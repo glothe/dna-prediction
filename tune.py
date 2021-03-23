@@ -5,7 +5,9 @@ import optuna
 from load import *
 from regression import *
 from svm import *
-from kernel import *
+
+from kernel.spectrum import spectrum_kernel
+from kernel.mismatch import mismatch_kernel
 
 import sklearn.kernel_ridge
 import sklearn.linear_model 
@@ -143,7 +145,7 @@ def svm_gaussian_cv(trial):
 ## Spectrum
 def svm_spectrum(trial):
     # Best  0.6300 (index=0)      {'C': 0.2681280835940456, 'm': 4}
-    #       0.6175 (index=1)    {'C': 56.883446994457, 'm': 4} #with value: 0.615 and parameters: {'C': 16.685807660880197, 'm': 4}
+    #       0.6175 (index=1)    {'C': 56.883446994457, 'm': 4} 
     #       0.6975 (index=2)    {'C': 0.24075076252842445, 'm': 4}
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
@@ -170,8 +172,8 @@ def svm_mismatch(trial):
     #       0.X (index=1)    {'C': 56.883446994457, 'm': 4} #with value: 0.615 and parameters: {'C': 16.685807660880197, 'm': 4}
     #       0.X (index=2)    {'C': 0.24075076252842445, 'm': 4}
     C = trial.suggest_float("C", 1e-2, 1e4, log=True)
-    k = trial.suggest_int("k", 3, 12)
-    m = trial.suggest_int("m", 1, k-1)
+    k = trial.suggest_int("k", 3, 8)
+    m = trial.suggest_int("m", 1, 2)
 
     svm = SupportVectorMachine(kernel=mismatch_kernel(m, k), regularization=C)
     svm.fit(Xtr[:500], ytr[:500])
@@ -194,16 +196,17 @@ def random():
     err = y_pred - yva
     return np.mean(err * err)
 
-print("_______ Dataset index=", index)
-study = optuna.create_study(direction="maximize")
 
-try:
-    # study.optimize(klr_mismatch, n_trials=100, n_jobs=-1)
-    study.optimize(svm_mismatch, n_trials=100)
+if __name__ == "__main__":
+    print("_______ Dataset index=", index)
+    study = optuna.create_study(direction="maximize")
 
-except KeyboardInterrupt:
-    pass
+    try:
+        study.optimize(svm_mismatch, n_trials=100, n_jobs=-1)
 
-# from optuna.visualization import plot_contour
-# fig = plot_contour(study, params=["C", "sig2"])
-# fig.show()
+    except KeyboardInterrupt:
+        pass
+
+    # from optuna.visualization import plot_contour
+    # fig = plot_contour(study, params=["C", "sig2"])
+    # fig.show()

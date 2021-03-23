@@ -2,7 +2,7 @@ import numpy as np
 import scipy.spatial.distance
 
 from load import *
-from kernel import linear_kernel
+from kernel.classic import linear_kernel
 
 
 def sigmoid(x):
