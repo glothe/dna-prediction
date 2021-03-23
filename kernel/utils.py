@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def memoize_id(func):
     """ 
     Memoize the function by object id. 
@@ -14,3 +17,14 @@ def memoize_id(func):
         return func.cache[id_]
 
     return wrapper
+
+
+def normalize_kernel(K, rows: np.ndarray=None, columns: np.ndarray=None):
+    if rows is None or columns is None:
+        # Assumes K is symmetric
+        rows = columns = 1 / np.sqrt(np.diagonal(K)) 
+    else:
+        rows = 1 / np.sqrt(rows)
+        columns = 1 / np.sqrt(columns)
+
+    return K * rows[:, None] * columns[None,]

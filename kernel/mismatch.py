@@ -6,7 +6,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from kernel.utils import memoize_id
+from kernel.utils import memoize_id, normalize_kernel
 
 
 ALPHABET = "ATCG"
@@ -41,10 +41,10 @@ def get_mismatch_list(substr: str, m: int) -> set:
     return s
 
 @memoize_id
-def feature_vector(X: np.ndarray, k: int = 4, m: int = 2):
+def feature_vectors(X: np.ndarray, k: int = 4, m: int = 2):
     n = len(X)
     X_dict = [None] * n
-    for i, x in enumerate(tqdm(X, desc=f"Mismatch kernel feature vector (k={k}, m={m})")):
+    for i, x in enumerate(X):
         X_dict[i] = defaultdict(int)
 
         for c in range(len(x) - k + 1):
@@ -66,7 +66,7 @@ def mismatch_kernel(k: int = 4, m: int = 2):
         symmetric = X0 is X1
 
         n0 = len(X0)
-        X0_dict = feature_vector(X0, k, m)
+        X0_dict = feature_vectors(X0, k, m)
 
         if symmetric:
             K = np.zeros(shape=(n0, n0))
@@ -77,10 +77,13 @@ def mismatch_kernel(k: int = 4, m: int = 2):
                     K[i, j] = sum(count * X0j[substr] for substr, count in X0i.items())
                     K[j, i] = K[i, j]
 
+            return normalize_kernel(K)
+
         else:
             n1 = len(X1)
             X1_dict = feature_vector(X1, k, m)
 
+            # Compute dot products
             K = np.zeros(shape=(n0, n1))
             for i in tqdm(range(n0), desc=f"Mismatch kernel (k={k}, m={m})"):
                 X0i = X0_dict[i]
@@ -88,14 +91,25 @@ def mismatch_kernel(k: int = 4, m: int = 2):
                     X1j = X1_dict[j]
                     K[i, j] = sum(count * X1j[substr] for substr, count in X0i.items())
 
-        return K
+            # Computes K(x, x) and K(y, y) for normalization
+            rows = np.zeros(shape=n0)
+            for i in range(n0):
+                rows[i] = sum(count ** 2 for count in X0_dict[i].values())
+
+            columns = np.zeros(shape=n1)
+            for j in range(n1):
+                columns[j] = sum(count ** 2 for count in X1_dict[j].values())
+
+            return normalize_kernel(K, rows=rows, columns=columns)
 
     return mismatch_kernel_inner
 
 
 if __name__ == "__main__":
     from load import *
+    from kernel.spectrum import spectrum_kernel
 
-    X = load_X()
+    X = load_X()[:100]
 
-    print(mismatch_kernel()(X, X))
+    print(mismatch_kernel(k=4, m=0)(X, X.copy()))
+    print(mismatch_kernel(k=4, m=0)(X, X))

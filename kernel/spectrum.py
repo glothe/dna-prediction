@@ -7,7 +7,7 @@ from numba.typed import Dict
 
 from tqdm import tqdm
 
-from kernel.utils import memoize_id
+from kernel.utils import memoize_id, normalize_kernel
 
 
 TRANSLATION = {
@@ -25,7 +25,7 @@ def complement(x: str):
     return x.translate(TRANSLATION)
 
 @memoize_id
-def feature_vector(X: np.ndarray, k: int):
+def feature_vectors(X: np.ndarray, k: int):
     n = len(X)
     X_dict = [None] * n
 
@@ -55,6 +55,8 @@ def spectrum_kernel(k: int = 4):
                     K[i, j] = sum(count * X0j[substr] for substr, count in X0i.items())
                     K[j, i] = K[i, j]
 
+            return normalize_kernel(K)
+
         else:
             n1 = len(X1)
             X1_dict = feature_vector(X1, k)
@@ -68,6 +70,15 @@ def spectrum_kernel(k: int = 4):
                     X1j = X1_dict[j]
                     K[i, j] = sum(count * X1j[substr] for substr, count in X0i.items())
 
-        return K
+            # Computes K(x, x) and K(y, y) for normalization
+            rows = np.zeros(shape=n0)
+            for i in range(n0):
+                rows[i] = sum(count ** 2 for count in X0_dict[i].values())
+
+            columns = np.zeros(shape=n1)
+            for j in range(n1):
+                columns[j] = sum(count ** 2 for count in X1_dict[j].values())
+
+            return normalize_kernel(K, rows=rows, columns=columns)
 
     return spectrum_kernel_inner

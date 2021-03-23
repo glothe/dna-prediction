@@ -158,9 +158,9 @@ def svm_gaussian_cv(trial):
 
 # Spectrum
 def svm_spectrum(trial):
-    # Best  0.6300 (index=0)    {'C': 0.2681280835940456, 'm': 4}
-    #       0.6175 (index=1)    {'C': 56.883446994457, 'm': 4} 
-    #       0.6975 (index=2)    {'C': 0.24075076252842445, 'm': 4}
+    # Best  0.6300 (index=0)    
+    #       0.6175 (index=1) {'C': 7.77391663055827, 'k': 4}
+    #       0.6975 (index=2)   
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
 
@@ -170,18 +170,18 @@ def svm_spectrum(trial):
 
 # Mismatch - not pd yet
 def klr_mismatch(trial): #Does not work
-    C = trial.suggest_float("C", 1e-1, 1e2, log=True)
+    C = trial.suggest_float("C", 1, 1e3, log=True)
     k = trial.suggest_int("k", 3, 5)
-    m = trial.suggest_int("m", 1, 1)
+    m = trial.suggest_int("m", 1, 2)
 
     klr = KernelLogisticRegression(kernel=mismatch_kernel(k, m), regularization=C)
     klr.fit(Xtr, ytr)
     return klr.accuracy(Xva, yva)
 
 def svm_mismatch(trial):
-    C = trial.suggest_float("C", 1e-2, 1e3, log=True)
-    k = trial.suggest_int("k", 3, 8)
-    m = trial.suggest_int("m", 1, 1)
+    C = trial.suggest_float("C", 1, 1e3, log=True)
+    k = trial.suggest_int("k", 3, 5)
+    m = trial.suggest_int("m", 1, 2)
 
     svm = SupportVectorMachine(kernel=mismatch_kernel(k, m), regularization=C)
     svm.fit(Xtr, ytr)
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_spectrum_gaussian, n_trials=100)
+        study.optimize(svm_mismatch, n_trials=100)
 
     except KeyboardInterrupt:
         pass
