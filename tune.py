@@ -26,10 +26,14 @@ from sklearn.model_selection import KFold
 index = 1
 split_param = .8
 
-Xmat, X, y = load_Xmat(index), load_X(index), load_y(index)
+Xmat = load_Xmat(index)
+X = load_X(index)
+Xdi = load_Xdi(index)
+y =load_y(index)
 
 Xmattr, Xmatva = split(Xmat, split_param)
 Xtr, Xva = split(X, split_param)
+Xditr, Xdiva = split(Xdi, split_param)
 ytr, yva = split(y, split_param)
 
 ## ______ All test functions ______
@@ -170,7 +174,7 @@ def svm_spectrum(trial):
 
 # Mismatch - not pd yet
 def klr_mismatch(trial): #Does not work
-    C = trial.suggest_float("C", 1, 1e3, log=True)
+    C = trial.suggest_float("C", 1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
     m = trial.suggest_int("m", 1, 2)
 
@@ -179,13 +183,13 @@ def klr_mismatch(trial): #Does not work
     return klr.accuracy(Xva, yva)
 
 def svm_mismatch(trial):
-    C = trial.suggest_float("C", 1, 1e3, log=True)
+    C = trial.suggest_float("C", 1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
-    m = trial.suggest_int("m", 1, 2)
+    m = trial.suggest_int("m", 1, 1)
 
     svm = SupportVectorMachine(kernel=mismatch_kernel(k, m), regularization=C)
-    svm.fit(Xtr, ytr)
-    return svm.accuracy(Xva, yva)
+    svm.fit(Xditr, ytr)
+    return svm.accuracy(Xdiva, yva)
 
 # MKL
 def svm_spectrum_gaussian(trial):
@@ -223,7 +227,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_spectrum_gaussian, n_trials=100, n_jobs=-1)
+        study.optimize(svm_mismatch, n_trials=100, n_jobs=-1)
 
     except KeyboardInterrupt:
         pass

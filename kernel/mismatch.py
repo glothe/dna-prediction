@@ -9,7 +9,8 @@ from tqdm import tqdm
 from kernel.utils import memoize_id, normalize_kernel
 
 
-ALPHABET = "ATCG"
+# ALPHABET = "ATCG"
+ALPHABET = "BCDEFHIJKLMNOPQR"
 
 
 # Mismatch String Kernels for SVM Protein Classification
