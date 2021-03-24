@@ -67,9 +67,9 @@
 \paragraph_indentation default
 \is_math_indent 0
 \math_numbering_side default
-\quotes_style english
-\dynamic_quotes 0
-\papercolumns 1
+\quotes_style swedish
+\dynamic_quotes 1
+\papercolumns 2
 \papersides 1
 \paperpagestyle default
 \tracking_changes false
@@ -85,8 +85,31 @@
 Machine learning with kernel methods - Kaggle challenge 
 \end_layout
 
-\begin_layout Standard
-Camille Démarre et Grégoire Lothe (Wavy bananas)
+\begin_layout Author
+Camille Démarre, Grégoire Lothe
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+
+\backslash
+
+\end_layout
+
+\end_inset
+
+ 
+\begin_inset Quotes xld
+\end_inset
+
+Wavy bananas
+\begin_inset Quotes xrd
+\end_inset
+
+
 \begin_inset Note Note
 status open
 
@@ -106,64 +129,242 @@ n and saves it in Yte.csv
 
 \end_layout
 
+\begin_layout Abstract
+The goal is to predict transcription factors from DNA sequences using kernel
+ methods.
+\end_layout
+
 \begin_layout Section
-Implemented kernels
+Implementation details
+\end_layout
+
+\begin_layout Subsection
+Kernels
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $\mathbb{R}^{d}$
+\end_inset
+
+ Kernels
+\end_layout
+
+\begin_layout Paragraph
+Linear Kernel
+\end_layout
+
+\begin_layout Paragraph
+Gaussian Kernel
 \end_layout
 
 \begin_layout Standard
-We implemented the following kernels:
+Although very simple to implement, the Gaussian kernel yielded the best
+ performance compared to other kernels.
 \end_layout
 
-\begin_layout Itemize
-linear kernel
+\begin_layout Subsubsection
+Sequence Kernels
 \end_layout
 
-\begin_layout Itemize
-gaussian kernel
+\begin_layout Standard
+We implemented the following kernels by simply storing the substring counts
+ of each sequence in hash tables.
+ This allowed effectively to compute sparse dot product with simple indexing,
+ although it was probably slower than implementations relying on 
+\family typewriter
+scipy.sparse.csr_matrix
+\family default
+ for instance.
 \end_layout
 
-\begin_layout Itemize
-spectrum kernel
+\begin_layout Standard
+Overall, the results of the following sequence based kernel proved to be
+ disappointing when compared to the relatively simple Gaussian kernel.
+ One reason could be that the transcription factors of a DNA sequence mostly
+ depend on the geometry of that sequence (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dimismatch"
+literal "false"
+
+\end_inset
+
+).
+ The following kernels mostly depend on small substrings which fail to embed
+ this information.
 \end_layout
 
-\begin_layout Itemize
-substring kernel
+\begin_layout Paragraph
+Spectrum Kernel
 \end_layout
 
-\begin_layout Section
+\begin_layout Standard
+We implemented the spectrum kernel as described in the course.
+ The following normalization (suggested in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dimismatch"
+literal "false"
+
+\end_inset
+
+) ended being necessary to avoid numerical issues with semi-definite positivenes
+s:
+\begin_inset Formula 
+\begin{equation}
+\tilde{K}_{\text{spectrum}}(x,y)=\cfrac{K_{\text{spectrum}}(x,y)}{\sqrt{K_{\text{spectrum}}(x,x)K_{\text{spectrum}}(y,y)}}\label{eq:norm}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Mismatch Kernel
+\end_layout
+
+\begin_layout Standard
+We implemented the mismatch kernel as presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "dimismatch"
+literal "false"
+
+\end_inset
+
+ on both raw DNA sequences and dinucleotide sequences.
+ For raw DNA sequences with small mismatch tolerance (
+\begin_inset Formula $m=1,2$
+\end_inset
+
+), the results were similar to those of the spectrum kernel.
+ For dinucleotide sequences, the number of mismatch corresponding to each
+ substring grew too large for our naive implementation to be tractable.
+ The normalization 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:norm"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ was also used.
+\end_layout
+
+\begin_layout Paragraph
+Substring Kernel
+\end_layout
+
+\begin_layout Subsubsection
+Submission
+\end_layout
+
+\begin_layout Paragraph
+Weighted Sum Kernel
+\end_layout
+
+\begin_layout Standard
+Our final submission ended up being based on a weighted sum kernel between
+ a spectrum kernel and a gaussian kernel.
+ This allowed to combine both the information from the bag-of-word representatio
+n (using the Gaussian kernel which relied on 
+\family typewriter
+XtrN_mat100.csv
+\family default
+ files) and the raw DNA sequences (using the spectrum kernel, which relied
+ on 
+\family typewriter
+XtrN.csv
+\family default
+ files).
+\end_layout
+
+\begin_layout Subsection
 Implemented algorithms
 \end_layout
 
 \begin_layout Standard
-We implemented:
+We implemented the following algorithms:
 \end_layout
 
 \begin_layout Itemize
-SVM
+SVM by directly solving a quadratic program using 
+\family typewriter
+cvxpy
+\family default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "diamond2016cvxpy,agrawal2018rewriting"
+literal "false"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Itemize
-Kernel Ridge Regression
+Kernel Ridge Regression (KRR) and Weigted Kernel Ridge Regression (WKRR).
 \end_layout
 
 \begin_layout Itemize
-Kernel Logistic Regression
+Kernel Logistic Regression based on the Iteratevely Reweigted Least Square
+ algorithm (IRLS).
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 Practical tools
 \end_layout
 
 \begin_layout Standard
-We split our initial data between a training set and validation set in the
- following proportions: 80%/20%.
- 
+We used the optuna library (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "optuna_2019"
+literal "false"
+
+\end_inset
+
+) with 
+\begin_inset Formula $K-$
+\end_inset
+
+fold cross validation (
+\begin_inset Formula $K=5$
+\end_inset
+
+) in order to tune the hyperparameters of our model (
+\begin_inset Formula $\sigma^{2}$
+\end_inset
+
+ for the Gaussian kernel, 
+\begin_inset Formula $k-$
+\end_inset
+
+mer length for spectrum kernel, blending factor of the weighted sum kernel
+ and regularization parameter 
+\begin_inset Formula $C$
+\end_inset
+
+).
+ We found empirically that concatenating the 3 different datasets improved
+ the overall performance, although we have no evidence that the datasets
+ are related.
 \end_layout
 
 \begin_layout Standard
-In order to optimize our hyperparameters, we used the optuna library.
- Once we computed the optimal hyperparameters for each dataset, we used
- the whole data to train our model.
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "report/ref"
+options "plain"
+
+\end_inset
+
+
 \end_layout
 
 \end_body
