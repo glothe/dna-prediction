@@ -49,6 +49,7 @@ def spectrum_kernel(k: int = 4):
 
             # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
+            # for i in range(n0):
                 X0i = X0_dict[i]
                 for j in range(i, n0):
                     X0j = X0_dict[j]
@@ -65,6 +66,7 @@ def spectrum_kernel(k: int = 4):
 
             # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
+            # for i in range(n0):
                 X0i = X0_dict[i]
                 for j in range(n1):
                     X1j = X1_dict[j]

@@ -1,7 +1,3 @@
-
-
-from functools import partial
-
 # Debugging
 import sklearn.kernel_ridge
 import sklearn.linear_model 
@@ -23,7 +19,7 @@ from kernel.mkl import weighted_sum_kernel
 from sklearn.model_selection import KFold
 
 ## ______ Parameters ______
-index = 1
+index = 3
 split_param = .8
 
 Xmat, X, y = load_Xmat(index), load_X(index), load_y(index)
@@ -31,6 +27,21 @@ Xmat, X, y = load_Xmat(index), load_X(index), load_y(index)
 Xmattr, Xmatva = split(Xmat, split_param)
 Xtr, Xva = split(X, split_param)
 ytr, yva = split(y, split_param)
+
+## Cross validation
+Xmat_tr_cv, X_tr_cv, y_tr_cv = [],[],[]
+Xmat_te_cv, X_te_cv, y_te_cv = [],[],[]
+
+kf5 = KFold(n_splits=5, shuffle=True, random_state=0)
+for train_index, test_index in kf5.split(range(len(X))):
+    Xmat_tr_cv.append(Xmat[train_index])
+    X_tr_cv.append(X[train_index])
+    y_tr_cv.append(y[train_index])
+
+    Xmat_te_cv.append(Xmat[test_index])
+    X_te_cv.append(X[test_index])
+    y_te_cv.append(y[test_index])
+
 
 ## ______ All test functions ______
 ## Sklearn to compare
@@ -200,11 +211,34 @@ def svm_spectrum_gaussian(trial):
     k2 = gaussian_kernel(sig2)
     kernel = weighted_sum_kernel(k1, k2, alpha)
 
-    # svm = SupportVectorMachine(kernel=kernel, regularization=C)
-    svm = KernelLogisticRegression(kernel=kernel, regularization=C)
+    svm = SupportVectorMachine(kernel=kernel, regularization=C)
     svm.fit((Xtr, Xmattr), ytr)
     return svm.accuracy((Xva, Xmatva), yva)
 
+def svm_spectrum_gaussian_cv(trial):
+    # Best  0.66867 (index=3) k=6 {'sig2': 0.0018807171973303132, 'alpha': 0.8092075217546304, 'C': 8.487642132378188} # {'sig2': 0.0070692362862250484, 'alpha': 0.16716878829043003, 'C': 0.9562507635122345}
+    #       0.6606 (index=3) k=7  {'sig2': 0.0023952930891851646, 'alpha': 0.5924630838851894, 'C': 0.9496619536392173} #{'sig2': 0.0038072413901906587, 'alpha': 0.5465019523098097, 'C': 0.7315160001875735} #{'sig2': 0.004411729468212926, 'alpha': 0.515781529441073, 'C': 0.586026133218107} # {'sig2': 0.0008152106908624851, 'alpha': 0.7629900839727197, 'C': 2.426485272234043}
+
+    sig2 = trial.suggest_float("sig2", 1e-5, 1e-1, log=True)
+    # k_ = trial.suggest_int("k", 3, 5)
+    k_ = 7
+    alpha = trial.suggest_float("alpha", 0, 1)
+    C = trial.suggest_float("C", 1e-2, 10, log=True)
+    
+    k1 = spectrum_kernel(k_)
+    k2 = gaussian_kernel(sig2)
+    kernel = weighted_sum_kernel(k1, k2, alpha)
+
+    total_score = 0.
+
+    for i in range(5):
+        svm = SupportVectorMachine(kernel=kernel, regularization=C)
+        svm.fit((X_tr_cv[i], Xmat_tr_cv[i]), y_tr_cv[i])
+        score = svm.accuracy((X_te_cv[i], Xmat_te_cv[i]), y_te_cv[i])
+        print(score)
+        total_score += score
+
+    return total_score / 5
 
 # Substring - too slow
 def svm_substring(trial):
@@ -223,7 +257,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_spectrum_gaussian, n_trials=100, n_jobs=-1)
+        study.optimize(svm_spectrum_gaussian_cv, n_trials=100)
 
     except KeyboardInterrupt:
         pass
