@@ -190,7 +190,7 @@ def svm_mismatch(trial):
 # MKL
 def svm_spectrum_gaussian(trial):
     # Best  0
-    #       0.6325 (index=1)    {'sig2': 0.005477685497805747, 'alpha': 0.06894000436436931, 'C': 8.655524486367424}
+    #       0.6325 (index=1)    {'sig2': 0.02071621910845629, 'alpha': 0.8469436560455597, 'C': 2.143111748529303}
     #       0
     sig2 = trial.suggest_float("sig2", 1e-5, 1e-1, log=True)
     alpha = trial.suggest_float("alpha", 0, 1)
@@ -200,7 +200,8 @@ def svm_spectrum_gaussian(trial):
     k2 = gaussian_kernel(sig2)
     kernel = weighted_sum_kernel(k1, k2, alpha)
 
-    svm = SupportVectorMachine(kernel=kernel, regularization=C)
+    # svm = SupportVectorMachine(kernel=kernel, regularization=C)
+    svm = KernelLogisticRegression(kernel=kernel, regularization=C)
     svm.fit((Xtr, Xmattr), ytr)
     return svm.accuracy((Xva, Xmatva), yva)
 
@@ -222,7 +223,7 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize")
 
     try:
-        study.optimize(svm_mismatch, n_trials=100)
+        study.optimize(svm_spectrum_gaussian, n_trials=100, n_jobs=-1)
 
     except KeyboardInterrupt:
         pass

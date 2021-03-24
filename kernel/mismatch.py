@@ -81,7 +81,7 @@ def mismatch_kernel(k: int = 4, m: int = 2):
 
         else:
             n1 = len(X1)
-            X1_dict = feature_vector(X1, k, m)
+            X1_dict = feature_vectors(X1, k, m)
 
             # Compute dot products
             K = np.zeros(shape=(n0, n1))

@@ -55,7 +55,7 @@ class KernelRidgeRegression(KernelRegression):
 
         self.y = y
 
-        n = len(self.X)
+        n = len(y)
         if weights is None:
             A = self.K.copy()
             A.flat[::n+1] += self.regularization * n
@@ -79,7 +79,7 @@ class KernelLogisticRegression(KernelRegression):
 
         self.y = y
 
-        n = len(X)
+        n = len(y)
         alpha = np.ones(shape=n) / np.sqrt(n)
 
         for i in range(max_iter):

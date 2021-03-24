@@ -42,7 +42,7 @@ def spectrum_kernel(k: int = 4):
         symmetric = X0 is X1
 
         n0 = len(X0)
-        X0_dict = feature_vector(X0, k)
+        X0_dict = feature_vectors(X0, k)
 
         if symmetric:
             K = np.zeros(shape=(n0, n0))
@@ -59,7 +59,7 @@ def spectrum_kernel(k: int = 4):
 
         else:
             n1 = len(X1)
-            X1_dict = feature_vector(X1, k)
+            X1_dict = feature_vectors(X1, k)
 
             K = np.zeros(shape=(n0, n1))
 
