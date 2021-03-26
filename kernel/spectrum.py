@@ -20,6 +20,14 @@ TRANSLATION = {
 
 @functools.lru_cache(None)
 def complement(x: str):
+    """Taking into account that the complement of a k-mer is supposed to be counted as the k-mer itself
+    projects upon the space of k-mers beginning either by 'A' or 'C'
+
+    e.g: ATAGCC == TATCGG
+    complement("ATAGCC")="ATAGCC"
+    complement("TATCGG")="ATAGCC"
+    
+    """
     if x[0] in "AC":
         return x
     return x.translate(TRANSLATION)
@@ -49,7 +57,6 @@ def spectrum_kernel(k: int = 4):
 
             # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
-            # for i in range(n0):
                 X0i = X0_dict[i]
                 for j in range(i, n0):
                     X0j = X0_dict[j]
@@ -66,7 +73,6 @@ def spectrum_kernel(k: int = 4):
 
             # Compute sparse dot product
             for i in tqdm(range(n0), desc=f"Spectrum kernel (k={k})"):
-            # for i in range(n0):
                 X0i = X0_dict[i]
                 for j in range(n1):
                     X1j = X1_dict[j]

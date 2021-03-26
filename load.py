@@ -1,3 +1,7 @@
+"""
+Load the data files for training and testing and option to split them
+"""
+
 import os.path
 import csv
 from itertools import product

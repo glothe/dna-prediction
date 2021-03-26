@@ -1,3 +1,7 @@
+"""
+Tuning of hyperparameters for different kernels with optuna
+"""
+
 # Debugging
 import sklearn.kernel_ridge
 import sklearn.linear_model 
@@ -19,7 +23,7 @@ from kernel.mkl import weighted_sum_kernel
 from sklearn.model_selection import KFold
 
 ## ______ Parameters ______
-index = 3
+index = 0
 split_param = .8
 
 Xmat = load_Xmat(index)
@@ -61,7 +65,7 @@ def sklearn_krr(trial):
     return np.mean(yva == np.sign(krr.predict(Xva)))
 
 def sklearn_klr(trial):
-    # Best .5525 (idem sklearn_krr ???)
+    # Best .5525
     C = trial.suggest_float("C", 1e-2, 1e2, log=True)
 
     krr = sklearn.linear_model.LogisticRegression(C=C)
@@ -71,7 +75,7 @@ def sklearn_klr(trial):
     return np.mean(yva == y_pred)
 
 def sklearn_svm(trial):
-    # Best .5525 (idem sklearn_krr ???)
+    # Best .5525
     C = trial.suggest_float("C", 1e-2, 1e2, log=True)
 
     svm = sklearn.svm.SVR(kernel="rbf", gamma="auto", C=C)
@@ -91,20 +95,21 @@ def random():
 def krr_linear(trial):
     lambda_ = trial.suggest_float("lambda_", 1e-3, 1e4, log=True)
     krr = KernelRidgeRegression(kernel=linear_kernel(), regularization=lambda_)
-    krr.fit(Xtr, ytr)
-    return krr.accuracy(Xva, yva)
+    krr.fit(Xmattr, ytr)
+    return krr.accuracy(Xmatva, yva)
 
 def klr_linear(trial):
     lambda_ = trial.suggest_float("lambda_", 1e-3, 1e4, log=True)
     klr = KernelLogisticRegression(kernel=linear_kernel(), regularization=lambda_)
-    klr.fit(Xtr, ytr)
-    return klr.accuracy(Xva, yva)
+    klr.fit(Xmattr, ytr)
+    return klr.accuracy(Xmatva, yva)
 
 def svm_linear(trial):
+    #0.5725
     C = trial.suggest_float("C", 1e-3, 1e4, log=True)
     svm = SupportVectorMachine(kernel=linear_kernel(), regularization=C)
-    svm.fit(Xtr, ytr)
-    return svm.accuracy(Xva, yva)
+    svm.fit(Xmattr, ytr)
+    return svm.accuracy(Xmatva, yva)
 
 ## Gaussian kernel
 def krr_gaussian(trial):
@@ -144,7 +149,6 @@ def svm_gaussian(trial):
     #       0.625 (index=1)    {'sig2': 0.026348581508309914, 'C': 3.521226987220084}   #6225   with {'sig2': 0.01877452515739, 'C': 1.7176296305911665}
     #       0.735 (index=2)    {'sig2': 0.007605991116858567, 'C': 0.8547649197628695}  #0.7275 with {'sig2': 0.006672040107687773, 'C': 1.0330032957410673}
 
-    # TODO Check convergence
     sig2 = trial.suggest_float("sig2", 1e-5, 1e-1, log=True)
     C = trial.suggest_float("C", 1e-2, 10, log=True)
 
@@ -171,7 +175,7 @@ def svm_gaussian_cv(trial):
     
     return total_score / 5
 
-# Spectrum
+## Spectrum
 def svm_spectrum(trial):
     # Best  0.6300 (index=0)    
     #       0.6175 (index=1) {'C': 7.77391663055827, 'k': 4}
@@ -183,8 +187,8 @@ def svm_spectrum(trial):
     svm.fit(Xtr, ytr)
     return svm.accuracy(Xva, yva)
 
-# Mismatch - not pd yet
-def klr_mismatch(trial): #Does not work
+## Mismatch
+def klr_mismatch(trial):
     C = trial.suggest_float("C", 1, 1e2, log=True)
     k = trial.suggest_int("k", 3, 5)
     m = trial.suggest_int("m", 1, 2)
@@ -202,7 +206,7 @@ def svm_mismatch(trial):
     svm.fit(Xditr, ytr)
     return svm.accuracy(Xdiva, yva)
 
-# MKL
+## Weighted sum of kernels
 def svm_spectrum_gaussian(trial):
     # Best  0
     #       0.6325 (index=1)    {'sig2': 0.02071621910845629, 'alpha': 0.8469436560455597, 'C': 2.143111748529303}
@@ -244,7 +248,7 @@ def svm_spectrum_gaussian_cv(trial):
 
     return total_score / 5
 
-# Substring - too slow
+## Substring - too slow !
 def svm_substring(trial):
     C = trial.suggest_float("C", 1e-1, 1e2, log=True)
     p = 5 #trial.suggest_int("p", 2, 2)
@@ -266,6 +270,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
 
-    # from optuna.visualization import plot_contour
-    # fig = plot_contour(study, params=["C", "sig2"])
-    # fig.show()
+    # Best results with svm_spectrum_gaussian_cv

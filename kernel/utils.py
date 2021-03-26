@@ -1,3 +1,7 @@
+"""
+Memoization function to avoid repeting similar computations
++ Normalization function
+"""
 import numpy as np
 
 

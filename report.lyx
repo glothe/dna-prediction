@@ -101,7 +101,7 @@ status open
 
 \end_inset
 
- 
+ Team 
 \begin_inset Quotes xld
 \end_inset
 
@@ -132,6 +132,14 @@ n and saves it in Yte.csv
 \begin_layout Abstract
 The goal is to predict transcription factors from DNA sequences using kernel
  methods.
+ This report presents the work done for the Kaggle competition where our
+ results were: 0.64866 in the public leaderboard (ranked 48th on 74) and
+ 0.64733 (ranked 50th on 74).
+ Link to our github: 
+\family typewriter
+https://github.com/glothe/dna-prediction
+\family default
+ (without the data files).
 \end_layout
 
 \begin_layout Section
@@ -159,7 +167,7 @@ Gaussian Kernel
 
 \begin_layout Standard
 Although very simple to implement, the Gaussian kernel yielded the best
- performance compared to other kernels.
+ performance compared to other kernels taken individually.
 \end_layout
 
 \begin_layout Subsubsection
@@ -258,6 +266,36 @@ noprefix "false"
 Substring Kernel
 \end_layout
 
+\begin_layout Standard
+We implemented the substring kernel (see 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "substring"
+literal "false"
+
+\end_inset
+
+) as was explained in the course using dynamic programming.
+ However, even when using 
+\family typewriter
+numba
+\family default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "numba"
+literal "false"
+
+\end_inset
+
+ in 
+\family typewriter
+nopython 
+\family default
+mode, the process was too long for us to tune our hyperparameters and make
+ conclusive experiments.
+\end_layout
+
 \begin_layout Subsubsection
 Submission
 \end_layout
@@ -353,6 +391,28 @@ mer length for spectrum kernel, blending factor of the weighted sum kernel
  We found empirically that concatenating the 3 different datasets improved
  the overall performance, although we have no evidence that the datasets
  are related.
+\end_layout
+
+\begin_layout Subsection
+Further work
+\end_layout
+
+\begin_layout Itemize
+From a practical point of view, we implemented a simple memoization tool
+ but it turned out that we should better have stored the kernel matrices
+ to use them across different experiments, which could have saved us a lot
+ of time.
+ We could have tested the substring kernel during night time for instance.
+\end_layout
+
+\begin_layout Itemize
+We could have combined more than two kernels (in particular sequence kernels
+ with different 
+\begin_inset Formula $k$
+\end_inset
+
+-mer lengths), using for instance Multiple Kernel Learnings methods, such
+ as what was presented in class.
 \end_layout
 
 \begin_layout Standard

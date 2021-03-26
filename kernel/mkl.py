@@ -1,6 +1,4 @@
-
-
-# Multiple kernel learning
+# Weighted sum kernel
 def weighted_sum_kernel(k1, k2, alpha: float = .5):
     def inner(X0: tuple, X1: tuple):
         X0_k1, X0_k2 = X0
